@@ -3,15 +3,22 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/haiword135/pokedexcli/internal/pokeapi"
 	"os"
 	"strings"
 )
 
-func startRepl() {
+type config struct {
+	pokeapiClient    pokeapi.Client
+	nextLocationsURL *string
+	prevLocationsURL *string
+}
+
+func startRepl(cfg *config) {
 	//从标准输入读取用户输入
 	reader := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("Pokedx > ")
+		fmt.Print("Pokedex > ")
 		reader.Scan()
 
 		words := cleanInput(reader.Text())
@@ -23,7 +30,7 @@ func startRepl() {
 
 		command, exists := getCommands()[commandName]
 		if exists {
-			err := command.callback()
+			err := command.callback(cfg)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -44,7 +51,7 @@ func cleanInput(text string) []string {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
 }
 
 func getCommands() map[string]cliCommand {
@@ -53,6 +60,16 @@ func getCommands() map[string]cliCommand {
 			name:        "help",
 			description: "Displays a help message",
 			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Get the next page of locations",
+			callback:    commandMapf,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Get the next page of locations",
+			callback:    commandMapb,
 		},
 		"exit": {
 			name:        "exit",
